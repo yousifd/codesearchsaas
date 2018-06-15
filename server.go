@@ -51,13 +51,6 @@ func ResultHandler(w http.ResponseWriter, r *http.Request) {
 		name := ix.Name(fileid)
 		g.File(name)
 	}
-
-	// t, err := template.ParseFiles("result.html")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// t.Execute(w, nil)
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
