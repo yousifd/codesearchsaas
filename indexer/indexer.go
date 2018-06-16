@@ -25,17 +25,16 @@ const (
 //	- Always pull latest changes and reindex repo to make sure you are up to date on search
 //  - Maybe have a timeout to avoid overloading the server
 // TODO: Option to search all repos
+//  - Show line numbers
+//  - etc.
 // TODO: Return output as JSON so it can be used in any way the user wants not and just strings
 // TODO: Add Search options similar to cmd line flags
 // TODO: Add filtering features (Predefines queries) + Inline Query options
-// TODO: File reader with ability to highlight variables and functions
-// 	and be able to search for them specificially in directory:
-// 	Defenitions, Declerations, and References
-// 	- Modify Index to store line numbers
-//  - Add links to file and load at specified line number
-//	- When loading file from server identify all the keywords for vars and funcs
+// TODO: Call IndexRepo concurrently and have a lock per repo
+// TODO: File reader with ability to highlight variables and functions:
+//	- When loading file in server identify all the keywords for vars and funcs
 //  - Add links that basically do a query on that keyword and return all references
-//  - Need to be able to identify keywords server side
+//   - Reference types: Defenitions, Declerations, and References
 //  - Find common issues: secruity flaws, bugs, spelling mistakes, grammar?
 
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
@@ -80,6 +79,7 @@ func IndexRepo(url string) {
 	})
 	ix.AddPaths(paths)
 
+	// Index all files in repo
 	filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
 		log.Printf("path: %s", path)
 		if _, elem := filepath.Split(path); elem != "" {
@@ -111,6 +111,7 @@ func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
 	g := regexp.Grep{
 		Stdout: w,
 		Stderr: w,
+		N:      true,
 	}
 
 	pat = "(?m)" + pat
@@ -119,7 +120,6 @@ func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
 	g.Regexp = re
 	query := index.RegexpQuery(re.Syntax)
 	indexFile := IndexDir + repoName
-	// TODO: Wait for index to finish
 	ix := index.Open(indexFile)
 
 	post := ix.PostingQuery(query)

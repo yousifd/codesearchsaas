@@ -36,7 +36,6 @@ func ResultHandler(w http.ResponseWriter, r *http.Request) {
 func RepoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	repoURL := strings.Join(r.Form["repoURL"], "")
-	//go indexer.IndexRepo(repoURL) // TODO: Make this concurrent (would be awesome)
 	indexer.IndexRepo(repoURL)
 
 	files, err := ioutil.ReadDir(indexer.IndexDir)
