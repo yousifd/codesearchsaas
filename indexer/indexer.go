@@ -2,7 +2,6 @@ package indexer
 
 import (
 	"codesearch/util"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,39 +15,39 @@ import (
 )
 
 const (
-	indexFile = "searchindex"
-	reposDir  = "repos/"
+	// IndexDir Path to searchindex files for each repo
+	IndexDir = "searchindex/"
+	reposDir = "repos/"
 )
 
-// TODO: Support multiple indexFiles, one for each repo/indexedfile
-// TODO: Add links to file and load at specified line number
-// 	- Modify Index to store line numbers
-// TODO: Add options similar to cmd line flags
-// TODO: Add filtering features
+// TODO: If a repo is already indexed, then pull latests changes, and index new/modified files
+// TODO: Have a list of all avialable repos and be able to specify them during search
+//	- Always pull latest changes and reindex repo to make sure you are up to date on search
+//  - Maybe have a timeout to avoid overloading the server
+// TODO: Option to search all repos
+// TODO: Return output as JSON so it can be used in any way the user wants not and just strings
+// TODO: Add Search options similar to cmd line flags
+// TODO: Add filtering features (Predefines queries) + Inline Query options
 // TODO: File reader with ability to highlight variables and functions
 // 	and be able to search for them specificially in directory:
 // 	Defenitions, Declerations, and References
-
-// IndexFile Indexes a file to indexFile
-func IndexFile(filename string, file io.Reader) {
-	ix := index.Create(indexFile)
-	log.Printf("index %s", filename)
-	ix.Add(filename, file)
-	log.Printf("flush index")
-	ix.Flush()
-	log.Printf("done")
-}
+// 	- Modify Index to store line numbers
+//  - Add links to file and load at specified line number
+//	- When loading file from server identify all the keywords for vars and funcs
+//  - Add links that basically do a query on that keyword and return all references
+//  - Need to be able to identify keywords server side
+//  - Find common issues: secruity flaws, bugs, spelling mistakes, grammar?
 
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
 func CloneRepo(url string) (*object.Tree, string) {
-	repoName := strings.Split(url, "/")
-	repoPath := reposDir + repoName[len(repoName)-1]
+	repoName := GetRepoName(url)
+	repoPath := reposDir + repoName
 	repo, err := git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL: url,
 	})
 	if err == git.ErrRepositoryAlreadyExists {
-		repo, err = git.PlainOpen("repo")
 		log.Printf("Repo already exists")
+		repo, err = git.PlainOpen(repoPath)
 	}
 	util.CheckError(err)
 
@@ -66,6 +65,8 @@ func CloneRepo(url string) (*object.Tree, string) {
 
 // IndexRepo Indexes a whole repo to indexFile
 func IndexRepo(url string) {
+	repoName := GetRepoName(url)
+	indexFile := IndexDir + repoName
 	ix := index.Create(indexFile)
 	var paths []string
 
@@ -106,7 +107,7 @@ func IndexRepo(url string) {
 }
 
 // QueryIndex Applies query to index and returns results
-func QueryIndex(w http.ResponseWriter, pat string) {
+func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
 	g := regexp.Grep{
 		Stdout: w,
 		Stderr: w,
@@ -117,6 +118,8 @@ func QueryIndex(w http.ResponseWriter, pat string) {
 	util.CheckError(err)
 	g.Regexp = re
 	query := index.RegexpQuery(re.Syntax)
+	indexFile := IndexDir + repoName
+	// TODO: Wait for index to finish
 	ix := index.Open(indexFile)
 
 	post := ix.PostingQuery(query)
@@ -124,4 +127,10 @@ func QueryIndex(w http.ResponseWriter, pat string) {
 		name := ix.Name(fileid)
 		g.File(name)
 	}
+}
+
+// GetRepoName Returns the name of the repo from its url
+func GetRepoName(url string) string {
+	repoName := strings.Split(url, "/")
+	return repoName[len(repoName)-1]
 }

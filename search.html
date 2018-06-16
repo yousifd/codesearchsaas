@@ -3,5 +3,10 @@
 <form action="/result/" method="POST">
     Type Regexp to Match:
     <input type="text" name="pattern">
+    <select name="repo">
+    {{ range $_, $file := . }} 
+        <option value="{{ $file.Name }}">{{ $file.Name }}</option>
+    {{ end }}
+    </select>
     <input type="submit" value="Search File" name="submit">
 </form>
