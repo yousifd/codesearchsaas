@@ -20,21 +20,21 @@ const (
 	reposDir = "repos/"
 )
 
-// TODO: If a repo is already indexed, then pull latests changes, and index new/modified files
-// TODO: Have a list of all avialable repos and be able to specify them during search
-//	- Always pull latest changes and reindex repo to make sure you are up to date on search
+// TODO: Return output as JSON so it can be used in any way the user wants not just strings
+// TODO: If a repo is already indexed, pull latests changes, and index new/modified files
+// TODO: Always pull latest changes and reindex repo to make sure you are up to date on search
 //  - Maybe have a timeout to avoid overloading the server
 // TODO: Option to search all repos
-//  - Show line numbers
-//  - etc.
-// TODO: Return output as JSON so it can be used in any way the user wants not and just strings
+// TODO: A search option to specify a repo to upload and index + a search param
 // TODO: Add Search options similar to cmd line flags
-// TODO: Add filtering features (Predefines queries) + Inline Query options
-// TODO: Call IndexRepo concurrently and have a lock per repo
+//  - main function options from cindex
+//  - regexp.Grep() options
+// TODO: Add filtering features (Predefines queries) + Inline Query filters
+// TODO: Call IndexRepo concurrently and have a lock per repo when indexing
 // TODO: File reader with ability to highlight variables and functions:
 //	- When loading file in server identify all the keywords for vars and funcs
-//  - Add links that basically do a query on that keyword and return all references
-//   - Reference types: Defenitions, Declerations, and References
+//  - Add links that basically do a query on that keyword and return all relations
+//   - Relation types: Defenitions, Declerations, and References
 //  - Find common issues: secruity flaws, bugs, spelling mistakes, grammar?
 
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
@@ -62,21 +62,9 @@ func CloneRepo(url string) (*object.Tree, string) {
 	return tree, repoPath
 }
 
-// IndexRepo Indexes a whole repo to indexFile
-func IndexRepo(url string) {
-	repoName := GetRepoName(url)
-	indexFile := IndexDir + repoName
+// IndexFiles Indexes files in under repoPath
+func IndexFiles(indexFile string, repoPath string, paths []string) {
 	ix := index.Create(indexFile)
-	var paths []string
-
-	// Iterate over files in repo HEAD
-	tree, repoPath := CloneRepo(url)
-	tree.Files().ForEach(func(f *object.File) error {
-		file := repoPath + f.Name
-		paths = append(paths, file)
-		log.Printf("index %s", f.Name)
-		return nil
-	})
 	ix.AddPaths(paths)
 
 	// Index all files in repo
@@ -106,8 +94,26 @@ func IndexRepo(url string) {
 	log.Printf("done")
 }
 
+// IndexRepo Indexes a whole repo to indexFile
+func IndexRepo(url string) {
+	repoName := GetRepoName(url)
+	indexFile := IndexDir + repoName
+	var paths []string
+
+	// Iterate over files in repo HEAD
+	tree, repoPath := CloneRepo(url)
+	tree.Files().ForEach(func(f *object.File) error {
+		file := repoPath + f.Name
+		paths = append(paths, file)
+		log.Printf("index %s", f.Name)
+		return nil
+	})
+	IndexFiles(indexFile, repoPath, paths)
+}
+
 // QueryIndex Applies query to index and returns results
 func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
+	// TODO: Return JSON object instead of writing to ResponseWriter
 	g := regexp.Grep{
 		Stdout: w,
 		Stderr: w,
