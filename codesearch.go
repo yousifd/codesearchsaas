@@ -34,7 +34,7 @@ func ResultHandler(w http.ResponseWriter, r *http.Request) {
 func RepoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	repoURL := strings.Join(r.Form["repoURL"], "")
-	indexer.Indexrepo(repoURL)
+	indexer.IndexRepo(repoURL)
 	http.Redirect(w, r, "/search/", http.StatusFound)
 }
 
