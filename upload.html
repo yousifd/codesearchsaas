@@ -1,7 +1,13 @@
 <h1>Upload the file that you want to search through!</h1>
 
-<form action="/index/" method="POST" enctype="multipart/form-data">
+<form action="/fileindex/" method="POST" enctype="multipart/form-data">
     Select a File to Upload:
     <input type="file" name="sourceFile" id="sourceFile">
     <input type="submit" value="Upload Source File" name="submit">
+</form>
+
+<form action="/repoindex/" method="POST">
+    Type in Git Repo URL:
+    <input type="text" name="repoURL">
+    <input type="submit" value="Upload Git Repo" name="submit">
 </form>
