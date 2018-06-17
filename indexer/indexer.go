@@ -33,25 +33,6 @@ type Result struct {
 	Entries []Entry
 }
 
-// TODO: Fix bug where who server crashes if invalid result param is specified "result/adfasdfsa"
-// TODO: Paralellaize querying with regexp using go
-// TODO: If a repo is already indexed, pull latests changes, and index new/modified files
-// TODO: Always pull latest changes and reindex repo to make sure you are up to date on search
-//  - Maybe have a timeout per repo to avoid overloading the server
-// TODO: Option to search all repos
-// TODO: A search option to specify a repo to upload and index + a search query
-// TODO: Add Search options similar to cmd line flags
-//  - main function options from cindex
-//  - regexp.Grep() options
-// TODO: Add filtering features (Predefined queries) + Inline Query filters
-// TODO: Call IndexRepo concurrently and have a lock per repo when indexing or something better
-// TODO: Project Files Explorer
-// TODO: File reader with ability to highlight variables and functions:
-//	- When loading file in server identify all the keywords for vars and funcs
-//  - Add links that basically do a query on that keyword and return all relations
-//   - Relation types: Defenitions, Declerations, and References
-//  - Find common issues: secruity flaws, bugs, spelling mistakes, grammar?
-
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
 func CloneRepo(url string) (*object.Tree, string) {
 	repoName := GetRepoName(url)
@@ -155,9 +136,10 @@ func QueryIndex(pat string, repoName string) *Result {
 		lineNumber, err := strconv.Atoi(splitEntry[1])
 		util.CheckError(err)
 		entry := Entry{
-			File:    splitEntry[0],
-			Line:    lineNumber,
-			Content: splitEntry[2],
+			File: splitEntry[0],
+			Line: lineNumber,
+			// Rejoin content that has colons in them using colons
+			Content: strings.Join(splitEntry[2:], ":"),
 		}
 		result.Entries = append(result.Entries, entry)
 	}
