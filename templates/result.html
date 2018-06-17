@@ -1,0 +1,16 @@
+<h1>Results</h1>
+
+<table>
+    <tr>
+        <th>File</th>
+        <th>Line</th>
+        <th>Content</th>
+    </tr>
+{{ range $_, $entry := .Entries }}
+    <tr>
+        <td>{{ $entry.File }}</td>
+        <td>{{ $entry.Line }}</td>
+        <td>{{ $entry.Content }}</td>
+    </tr>
+{{ end }}
+</table>

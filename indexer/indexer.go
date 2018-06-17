@@ -1,11 +1,12 @@
 package indexer
 
 import (
+	"bytes"
 	"codesearch/util"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/google/codesearch/index"
@@ -20,16 +21,28 @@ const (
 	reposDir = "repos/"
 )
 
-// TODO: Return output as JSON so it can be used in any way the user wants not just strings
+// Entry Represents an entry from a result query
+type Entry struct {
+	File    string
+	Line    int
+	Content string
+}
+
+// Result Represents all resulting entries of a query
+type Result struct {
+	Entries []Entry
+}
+
+// TODO: Paralellaize querying using regexp using go
 // TODO: If a repo is already indexed, pull latests changes, and index new/modified files
 // TODO: Always pull latest changes and reindex repo to make sure you are up to date on search
-//  - Maybe have a timeout to avoid overloading the server
+//  - Maybe have a timeout per repo to avoid overloading the server
 // TODO: Option to search all repos
-// TODO: A search option to specify a repo to upload and index + a search param
+// TODO: A search option to specify a repo to upload and index + a search query
 // TODO: Add Search options similar to cmd line flags
 //  - main function options from cindex
 //  - regexp.Grep() options
-// TODO: Add filtering features (Predefines queries) + Inline Query filters
+// TODO: Add filtering features (Predefined queries) + Inline Query filters
 // TODO: Call IndexRepo concurrently and have a lock per repo when indexing
 // TODO: File reader with ability to highlight variables and functions:
 //	- When loading file in server identify all the keywords for vars and funcs
@@ -112,11 +125,11 @@ func IndexRepo(url string) {
 }
 
 // QueryIndex Applies query to index and returns results
-func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
-	// TODO: Return JSON object instead of writing to ResponseWriter
+func QueryIndex(pat string, repoName string) *Result {
+	buf := new(bytes.Buffer)
 	g := regexp.Grep{
-		Stdout: w,
-		Stderr: w,
+		Stdout: buf,
+		Stderr: buf,
 		N:      true,
 	}
 
@@ -133,6 +146,26 @@ func QueryIndex(w http.ResponseWriter, pat string, repoName string) {
 		name := ix.Name(fileid)
 		g.File(name)
 	}
+
+	// Generate Results object from reader
+	result := new(Result)
+	for _, e := range strings.Split(buf.String(), "\n") {
+		if e == "" {
+			continue
+		}
+		splitEntry := strings.Split(e, ":")
+		lineNumber, err := strconv.Atoi(splitEntry[1])
+		util.CheckError(err)
+		entry := Entry{
+			File:    splitEntry[0],
+			Line:    lineNumber,
+			Content: splitEntry[2],
+		}
+		log.Printf("entry: %+v", entry)
+		result.Entries = append(result.Entries, entry)
+	}
+
+	return result
 }
 
 // GetRepoName Returns the name of the repo from its url
