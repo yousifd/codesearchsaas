@@ -7,6 +7,7 @@
     {{ range $_, $file := . }} 
         <option value="{{ $file.Name }}">{{ $file.Name }}</option>
     {{ end }}
+        <option  value="">All Repos</option>
     </select>
     <input type="submit" value="Search File" name="submit">
 </form>

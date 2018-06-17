@@ -3,6 +3,7 @@ package indexer
 import (
 	"bytes"
 	"codesearch/util"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -110,10 +111,21 @@ func IndexRepo(url string) {
 	IndexFiles(indexFile, repoPath, paths)
 }
 
+// ApplyQuery Applies query to indexfile and outputs to g
+func ApplyQuery(g *regexp.Grep, indexFile string, query *index.Query) {
+	ix := index.Open(indexFile)
+
+	post := ix.PostingQuery(query)
+	for _, fileid := range post {
+		name := ix.Name(fileid)
+		g.File(name)
+	}
+}
+
 // QueryIndex Applies query to index and returns results
 func QueryIndex(pat string, repoName string) *Result {
 	buf := new(bytes.Buffer)
-	g := regexp.Grep{
+	g := &regexp.Grep{
 		Stdout: buf,
 		Stderr: buf,
 		N:      true,
@@ -125,12 +137,17 @@ func QueryIndex(pat string, repoName string) *Result {
 	g.Regexp = re
 	query := index.RegexpQuery(re.Syntax)
 	indexFile := IndexDir + repoName
-	ix := index.Open(indexFile)
+	if indexFile == IndexDir {
+		files, err := ioutil.ReadDir(indexFile)
+		util.CheckError(err)
 
-	post := ix.PostingQuery(query)
-	for _, fileid := range post {
-		name := ix.Name(fileid)
-		g.File(name)
+		for _, f := range files {
+			fileName := indexFile + f.Name()
+			log.Printf("file Name: %s", fileName)
+			ApplyQuery(g, fileName, query)
+		}
+	} else {
+		ApplyQuery(g, indexFile, query)
 	}
 
 	// Generate Results object from reader
