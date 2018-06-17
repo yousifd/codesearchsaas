@@ -43,6 +43,13 @@ func CloneRepo(url string) (*object.Tree, string) {
 	if err == git.ErrRepositoryAlreadyExists {
 		log.Printf("Repo already exists")
 		repo, err = git.PlainOpen(repoPath)
+		util.CheckError(err)
+
+		w, err := repo.Worktree()
+		util.CheckError(err)
+		err = w.Pull(&git.PullOptions{
+			RemoteName: "origin",
+		})
 	}
 	util.CheckError(err)
 
