@@ -8,7 +8,7 @@
     </tr>
 {{ range $_, $entry := .Entries }}
     <tr>
-        <td>{{ $entry.File }}</td>
+        <td><a href="/file/?f={{ $entry.File }}">{{ $entry.File }}</a></td>
         <td>{{ $entry.Line }}</td>
         <td>{{ $entry.Content }}</td>
     </tr>

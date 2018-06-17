@@ -4,9 +4,11 @@ import (
 	"codesearch/indexer"
 	"codesearch/util"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -57,10 +59,25 @@ func RepoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, files)
 }
 
+// FileHandler Handles Opening files for user
+func FileHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("url %s", r.URL)
+
+	fileName := r.URL.Query()["f"][0]
+
+	log.Printf("filename %s", fileName)
+	file, err := os.Open(fileName)
+	util.CheckError(err)
+	defer file.Close()
+
+	io.Copy(w, file)
+}
+
 func main() {
 	http.HandleFunc("/", UploadHandler)
 	http.HandleFunc("/search/", SearchHandler)
 	http.HandleFunc("/result/", ResultHandler)
 	http.HandleFunc("/repoindex/", RepoIndexHandler)
+	http.HandleFunc("/file/", FileHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

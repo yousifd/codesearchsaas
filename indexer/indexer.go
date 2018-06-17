@@ -33,7 +33,8 @@ type Result struct {
 	Entries []Entry
 }
 
-// TODO: Paralellaize querying using regexp using go
+// TODO: Fix bug where who server crashes if invalid result param is specified "result/adfasdfsa"
+// TODO: Paralellaize querying with regexp using go
 // TODO: If a repo is already indexed, pull latests changes, and index new/modified files
 // TODO: Always pull latest changes and reindex repo to make sure you are up to date on search
 //  - Maybe have a timeout per repo to avoid overloading the server
@@ -43,7 +44,8 @@ type Result struct {
 //  - main function options from cindex
 //  - regexp.Grep() options
 // TODO: Add filtering features (Predefined queries) + Inline Query filters
-// TODO: Call IndexRepo concurrently and have a lock per repo when indexing
+// TODO: Call IndexRepo concurrently and have a lock per repo when indexing or something better
+// TODO: Project Files Explorer
 // TODO: File reader with ability to highlight variables and functions:
 //	- When loading file in server identify all the keywords for vars and funcs
 //  - Add links that basically do a query on that keyword and return all relations
@@ -82,7 +84,6 @@ func IndexFiles(indexFile string, repoPath string, paths []string) {
 
 	// Index all files in repo
 	filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
-		log.Printf("path: %s", path)
 		if _, elem := filepath.Split(path); elem != "" {
 			// Skip various temporary or "hidden" files or directories.
 			if elem[0] == '.' || elem[0] == '#' || elem[0] == '~' || elem[len(elem)-1] == '~' {
@@ -102,9 +103,7 @@ func IndexFiles(indexFile string, repoPath string, paths []string) {
 		return nil
 	})
 
-	log.Printf("flush index")
 	ix.Flush()
-	log.Printf("done")
 }
 
 // IndexRepo Indexes a whole repo to indexFile
@@ -118,7 +117,6 @@ func IndexRepo(url string) {
 	tree.Files().ForEach(func(f *object.File) error {
 		file := repoPath + f.Name
 		paths = append(paths, file)
-		log.Printf("index %s", f.Name)
 		return nil
 	})
 	IndexFiles(indexFile, repoPath, paths)
@@ -161,7 +159,6 @@ func QueryIndex(pat string, repoName string) *Result {
 			Line:    lineNumber,
 			Content: splitEntry[2],
 		}
-		log.Printf("entry: %+v", entry)
 		result.Entries = append(result.Entries, entry)
 	}
 
