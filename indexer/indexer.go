@@ -34,6 +34,24 @@ type Result struct {
 	Entries []Entry
 }
 
+// PullRepoChanges Pulls latests changes from repo
+func PullRepoChanges(repoPath string) *git.Repository {
+	repo, err := git.PlainOpen(repoPath)
+	util.CheckError(err)
+
+	w, err := repo.Worktree()
+	util.CheckError(err)
+
+	err = w.Pull(&git.PullOptions{
+		RemoteName: "origin",
+	})
+	if err != git.NoErrAlreadyUpToDate {
+		util.CheckError(err)
+	}
+
+	return repo
+}
+
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
 func CloneRepo(url string) (*object.Tree, string) {
 	repoName := GetRepoName(url)
@@ -43,14 +61,8 @@ func CloneRepo(url string) (*object.Tree, string) {
 	})
 	if err == git.ErrRepositoryAlreadyExists {
 		log.Printf("Repo already exists")
-		repo, err = git.PlainOpen(repoPath)
-		util.CheckError(err)
-
-		w, err := repo.Worktree()
-		util.CheckError(err)
-		err = w.Pull(&git.PullOptions{
-			RemoteName: "origin",
-		})
+		repo = PullRepoChanges(repoPath)
+		err = nil
 	}
 	util.CheckError(err)
 
@@ -112,7 +124,19 @@ func IndexRepo(url string) {
 }
 
 // ApplyQuery Applies query to indexfile and outputs to g
-func ApplyQuery(g *regexp.Grep, indexFile string, query *index.Query) {
+func ApplyQuery(indexFile string, pat string, buf *bytes.Buffer) {
+	g := &regexp.Grep{
+		Stdout: buf,
+		Stderr: buf,
+		N:      true,
+	}
+
+	pat = "(?m)" + pat
+	re, err := regexp.Compile(pat)
+	util.CheckError(err)
+	g.Regexp = re
+	query := index.RegexpQuery(re.Syntax)
+
 	ix := index.Open(indexFile)
 
 	post := ix.PostingQuery(query)
@@ -125,17 +149,6 @@ func ApplyQuery(g *regexp.Grep, indexFile string, query *index.Query) {
 // QueryIndex Applies query to index and returns results
 func QueryIndex(pat string, repoName string) *Result {
 	buf := new(bytes.Buffer)
-	g := &regexp.Grep{
-		Stdout: buf,
-		Stderr: buf,
-		N:      true,
-	}
-
-	pat = "(?m)" + pat
-	re, err := regexp.Compile(pat)
-	util.CheckError(err)
-	g.Regexp = re
-	query := index.RegexpQuery(re.Syntax)
 	indexFile := IndexDir + repoName
 	if indexFile == IndexDir {
 		files, err := ioutil.ReadDir(indexFile)
@@ -143,11 +156,12 @@ func QueryIndex(pat string, repoName string) *Result {
 
 		for _, f := range files {
 			fileName := indexFile + f.Name()
-			log.Printf("file Name: %s", fileName)
-			ApplyQuery(g, fileName, query)
+			PullRepoChanges(reposDir + f.Name())
+			ApplyQuery(fileName, pat, buf)
 		}
 	} else {
-		ApplyQuery(g, indexFile, query)
+		PullRepoChanges(reposDir + repoName)
+		ApplyQuery(indexFile, pat, buf)
 	}
 
 	// Generate Results object from reader

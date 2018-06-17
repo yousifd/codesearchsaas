@@ -1,8 +1,5 @@
 * Parallelize querying with regexp using go and wait before returning result for queries to finish
  - Maybe use semaphores to limit number of threads given that one would be spawned per file to index
-* When searching for a repo in index pull latest changes and index it
- - Maybe have a timeout per repo to avoid overloading the server
-* Option to search all repos
 * A search option to specify a repo to upload and index + a search query
 * Add Search options similar to cmd line flags
  - main function options from cindex and csearch
