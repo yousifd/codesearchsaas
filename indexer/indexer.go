@@ -52,6 +52,20 @@ func PullRepoChanges(repoPath string) *git.Repository {
 	return repo
 }
 
+// TreeFromRepo Returns a tree representing commit at HEAD
+func TreeFromRepo(repo *git.Repository) *object.Tree {
+	ref, err := repo.Head()
+	util.CheckError(err)
+
+	commit, err := repo.CommitObject(ref.Hash())
+	util.CheckError(err)
+
+	tree, err := commit.Tree()
+	util.CheckError(err)
+
+	return tree
+}
+
 // CloneRepo Clones repo at url and returns tree of commit at HEAD
 func CloneRepo(url string) (*object.Tree, string) {
 	repoName := GetRepoName(url)
@@ -66,16 +80,7 @@ func CloneRepo(url string) (*object.Tree, string) {
 	}
 	util.CheckError(err)
 
-	ref, err := repo.Head()
-	util.CheckError(err)
-
-	commit, err := repo.CommitObject(ref.Hash())
-	util.CheckError(err)
-
-	tree, err := commit.Tree()
-	util.CheckError(err)
-
-	return tree, repoPath
+	return TreeFromRepo(repo), repoPath
 }
 
 // IndexFiles Indexes files in under repoPath
@@ -107,20 +112,24 @@ func IndexFiles(indexFile string, repoPath string, paths []string) {
 	ix.Flush()
 }
 
-// IndexRepo Indexes a whole repo to indexFile
-func IndexRepo(url string) {
-	repoName := GetRepoName(url)
-	indexFile := IndexDir + repoName
+// IndexTree Indexes tree within indexFile
+func IndexTree(tree *object.Tree, repoPath string, indexFile string) {
 	var paths []string
-
-	// Iterate over files in repo HEAD
-	tree, repoPath := CloneRepo(url)
 	tree.Files().ForEach(func(f *object.File) error {
 		file := repoPath + f.Name
 		paths = append(paths, file)
 		return nil
 	})
 	IndexFiles(indexFile, repoPath, paths)
+}
+
+// IndexRepo Indexes a whole repo to indexFile
+func IndexRepo(url string) {
+	repoName := GetRepoName(url)
+	indexFile := IndexDir + repoName
+
+	tree, repoPath := CloneRepo(url)
+	IndexTree(tree, repoPath, indexFile)
 }
 
 // ApplyQuery Applies query to indexfile and outputs to g
@@ -146,6 +155,13 @@ func ApplyQuery(indexFile string, pat string, buf *bytes.Buffer) {
 	}
 }
 
+// PullIndexAndQuery Pulls latests changes for repo and indexes them then applies query
+func PullIndexAndQuery(indexFile string, repoPath string, pat string, buf *bytes.Buffer) {
+	repo := PullRepoChanges(repoPath)
+	IndexTree(TreeFromRepo(repo), repoPath, indexFile)
+	ApplyQuery(indexFile, pat, buf)
+}
+
 // QueryIndex Applies query to index and returns results
 func QueryIndex(pat string, repoName string) *Result {
 	buf := new(bytes.Buffer)
@@ -156,12 +172,12 @@ func QueryIndex(pat string, repoName string) *Result {
 
 		for _, f := range files {
 			fileName := indexFile + f.Name()
-			PullRepoChanges(reposDir + f.Name())
-			ApplyQuery(fileName, pat, buf)
+			repoPath := reposDir + f.Name()
+			PullIndexAndQuery(fileName, repoPath, pat, buf)
 		}
 	} else {
-		PullRepoChanges(reposDir + repoName)
-		ApplyQuery(indexFile, pat, buf)
+		repoPath := reposDir + repoName
+		PullIndexAndQuery(indexFile, repoPath, pat, buf)
 	}
 
 	// Generate Results object from reader
