@@ -1,4 +1,3 @@
-* Fix bug where the server crashes if invalid result param is specified "result/whataeverwrong"
 * Support authentication if repo is private
 * Parallelize querying with regexp using go and wait before returning result for queries to finish
 * If newly uploaded repo is already indexed, pull latest changes, and index new/modified files

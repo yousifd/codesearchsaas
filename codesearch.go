@@ -38,7 +38,10 @@ func ResultHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	pat := strings.Join(r.Form["pattern"], "")
 	repoName := strings.Join(r.Form["repo"], "")
-	result := indexer.QueryIndex(pat, repoName)
+	var result *indexer.Result
+	if pat != "" || repoName != "" {
+		result = indexer.QueryIndex(pat, repoName)
+	}
 
 	t, err := template.ParseFiles(resultHTML)
 	util.CheckError(err)
