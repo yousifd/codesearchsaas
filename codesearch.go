@@ -14,23 +14,18 @@ import (
 
 const (
 	templateDir = "templates/"
-	uploadHTML  = templateDir + "upload.html"
 	searchHTML  = templateDir + "search.html"
 	resultHTML  = templateDir + "result.html"
 )
 
-// UploadHandler Handles upload requests
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles(uploadHTML)
-	util.CheckError(err)
-	t.Execute(w, nil)
-}
-
 // SearchHandler Handles search requests
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	files, err := ioutil.ReadDir(indexer.IndexDir)
+	util.CheckError(err)
+
 	t, err := template.ParseFiles(searchHTML)
 	util.CheckError(err)
-	t.Execute(w, nil)
+	t.Execute(w, files)
 }
 
 // ResultHandler Handles result display requests
@@ -54,12 +49,7 @@ func RepoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	repoURL := strings.Join(r.Form["repoURL"], "")
 	indexer.IndexRepo(repoURL)
 
-	files, err := ioutil.ReadDir(indexer.IndexDir)
-	util.CheckError(err)
-
-	t, err := template.ParseFiles(searchHTML)
-	util.CheckError(err)
-	t.Execute(w, files)
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // FileHandler Handles Opening files for user
@@ -77,8 +67,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", UploadHandler)
-	http.HandleFunc("/search/", SearchHandler)
+	http.HandleFunc("/", SearchHandler)
 	http.HandleFunc("/result/", ResultHandler)
 	http.HandleFunc("/repoindex/", RepoIndexHandler)
 	http.HandleFunc("/file/", FileHandler)

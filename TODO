@@ -1,13 +1,12 @@
 * Parallelize querying with regexp using go and wait before returning result for queries to finish
- - Maybe use semaphores to limit number of threads given that one would be spawned per file to index
+* Call IndexRepo concurrently and have a lock per indexfile when indexing
 * A search option to specify a repo to upload and index + a search query
 * Add Search options similar to cmd line flags
  - main function options from cindex and csearch
  - regexp.Grep() options
 * Add filtering features (Predefined queries) + Inline Query filters
-* Call IndexRepo concurrently and have a lock per repo when indexing or something better
 * Support authentication if repo is private
-* Project Files Explorer
+* Project Files Explorer (Sidebar project tree) with links to open each file
 * File reader with ability to highlight variables and functions:
  - When loading file in server identify all the keywords for vars and funcs
  - Add links that basically do a query on that keyword and return all relations
