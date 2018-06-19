@@ -1,5 +1,4 @@
-* Parallelize querying with regexp using go and wait before returning result for queries to finish
-* Call IndexRepo concurrently and have a lock per indexfile when indexing
+* Rebuild index and search functionality from the ground up to be concurrent
 * A search option to specify a repo to upload and index + a search query
 * Add Search options similar to cmd line flags
  - main function options from cindex and csearch
@@ -12,4 +11,3 @@
  - Add links that basically do a query on that keyword and return all relations
   - Relation types: Defenitions, Declerations, and References
  - Find common issues: secruity flaws, bugs, spelling mistakes, grammar?
- - When opening file go to line and highlight query result

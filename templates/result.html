@@ -8,7 +8,11 @@
     </tr>
 {{ range $_, $entry := .Entries }}
     <tr>
-        <td><a href="/file/?f={{ $entry.File }}">{{ $entry.File }}</a></td>
+        <td>
+            <a href="/file/?f={{ $entry.File }}&l={{ $entry.Line }}&c={{ $entry.Content }}#{{ $entry.Line }}">
+                {{ $entry.File }}
+            </a>
+        </td>
         <td>{{ $entry.Line }}</td>
         <td>{{ $entry.Content }}</td>
     </tr>
