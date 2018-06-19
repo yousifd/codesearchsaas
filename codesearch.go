@@ -67,6 +67,7 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	indexer.Init()
 	http.HandleFunc("/", SearchHandler)
 	http.HandleFunc("/result/", ResultHandler)
 	http.HandleFunc("/repoindex/", RepoIndexHandler)

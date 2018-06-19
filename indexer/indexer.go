@@ -34,6 +34,17 @@ type Result struct {
 	Entries []Entry
 }
 
+// Init Initializes indexer
+func Init() {
+	if _, err := os.Stat(IndexDir); os.IsNotExist(err) {
+		os.Mkdir(IndexDir, os.ModePerm)
+	}
+
+	if _, err := os.Stat(reposDir); os.IsNotExist(err) {
+		os.Mkdir(reposDir, os.ModePerm)
+	}
+}
+
 // PullRepoChanges Pulls latests changes from repo
 func PullRepoChanges(repoPath string) *git.Repository {
 	repo, err := git.PlainOpen(repoPath)
