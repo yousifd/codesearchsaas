@@ -1,11 +1,13 @@
+* Project Files Explorer (Sidebar project tree) with links to open each file
+ - Why do Regular Files Repeat?
+ - CSS to make file explorer to the left all the time
+* Support authentication if repo is private
 * Rebuild index and search functionality from the ground up to be concurrent
 * A search option to specify a repo to upload and index + a search query
 * Add Search options similar to cmd line flags
  - main function options from cindex and csearch
  - regexp.Grep() options
 * Add filtering features (Predefined queries) + Inline Query filters
-* Support authentication if repo is private
-* Project Files Explorer (Sidebar project tree) with links to open each file
 * File reader with ability to highlight variables and functions:
  - When loading file in server identify all the keywords for vars and funcs
  - Add links that basically do a query on that keyword and return all relations
