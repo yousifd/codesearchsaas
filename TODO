@@ -1,5 +1,3 @@
-* Project Files Explorer (Sidebar project tree) with links to open each file
- - CSS to make file explorer to the left all the time
 * Support authentication if repo is private
 * Modify index and search library to be concurrent
 * Add Search options similar to cmd line flags

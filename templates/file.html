@@ -1,5 +1,24 @@
-<h1>{{.FileName}}</h1>
+<html>
+<head>
+     <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="filebrowser">
+        <h1>
+            {{.FileName}}
+        </h1>
 
-<div>{{.FileTree}}</div>
+        <div id="topmenu">
+            <a href="/">Back to Search</a>
+        </div>
 
-<div>{{.FileContent}}</div>
+        <div id="filetree">
+            {{.FileTree}}
+        </div>
+
+        <div id="filecontent">
+            {{.FileContent}}
+        </div>
+    </div>
+</body>
+</html>

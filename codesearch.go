@@ -70,11 +70,9 @@ func FileTreeString(file string, depth int) string {
 				continue
 			}
 			filePath := file + "/" + fileName
-			log.Printf("filePath: %s", filePath)
 			out += FileTreeString(filePath, depth+1)
 		}
 	} else {
-		log.Printf("reg filename: %s", file)
 		out += strings.Repeat("&nbsp;", depth) +
 			"<a href=\"/file/?f=" + file + "\">" + file + "</a></br>"
 	}
@@ -97,7 +95,6 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		line = l
 	}
 
-	log.Printf("fileName: %s", fileName)
 	file, err := os.Open(fileName)
 	util.CheckError(err)
 	defer file.Close()
@@ -138,5 +135,6 @@ func main() {
 	http.HandleFunc("/result/", ResultHandler)
 	http.HandleFunc("/repoindex/", RepoIndexHandler)
 	http.HandleFunc("/file/", FileHandler)
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("templates/css"))))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
