@@ -94,14 +94,22 @@ func CloneRepo(url string) (*object.Tree, string) {
 	return TreeFromRepo(repo), repoPath
 }
 
-// IndexFiles Indexes files in under repoPath
-func IndexFiles(indexFile string, repoPath string, paths []string) {
-	ix := index.Create(indexFile)
-	ix.AddPaths(paths)
+// IndexTree Indexes tree within indexFile
+func IndexTree(tree *object.Tree, repoPath string, indexFile string) {
+	var paths []string
 
-	// Index all files in repo
-	filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
-		if _, elem := filepath.Split(path); elem != "" {
+	ix := index.Create(indexFile)
+
+	tree.Files().ForEach(func(f *object.File) error {
+		file := repoPath + "/" + f.Name
+		info, err := os.Stat(file)
+		if err != nil {
+			util.CheckError(err)
+			return nil
+		}
+		paths = append(paths, file)
+
+		if _, elem := filepath.Split(file); elem != "" {
 			// Skip various temporary or "hidden" files or directories.
 			if elem[0] == '.' || elem[0] == '#' || elem[0] == '~' || elem[len(elem)-1] == '~' {
 				if info.IsDir() {
@@ -111,27 +119,17 @@ func IndexFiles(indexFile string, repoPath string, paths []string) {
 			}
 		}
 		if err != nil {
-			log.Printf("%s: %s", path, err)
+			log.Printf("%s: %s", file, err)
 			return nil
 		}
 		if info != nil && info.Mode()&os.ModeType == 0 {
-			ix.AddFile(path)
+			ix.AddFile(file)
 		}
 		return nil
 	})
 
+	ix.AddPaths(paths)
 	ix.Flush()
-}
-
-// IndexTree Indexes tree within indexFile
-func IndexTree(tree *object.Tree, repoPath string, indexFile string) {
-	var paths []string
-	tree.Files().ForEach(func(f *object.File) error {
-		file := repoPath + f.Name
-		paths = append(paths, file)
-		return nil
-	})
-	IndexFiles(indexFile, repoPath, paths)
 }
 
 // IndexRepo Indexes a whole repo to indexFile
