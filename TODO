@@ -1,9 +1,7 @@
 * Project Files Explorer (Sidebar project tree) with links to open each file
- - Why do Regular Files Repeat?
  - CSS to make file explorer to the left all the time
 * Support authentication if repo is private
-* Rebuild index and search functionality from the ground up to be concurrent
-* A search option to specify a repo to upload and index + a search query
+* Modify index and search library to be concurrent
 * Add Search options similar to cmd line flags
  - main function options from cindex and csearch
  - regexp.Grep() options

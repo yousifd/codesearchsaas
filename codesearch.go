@@ -54,27 +54,27 @@ func RepoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-// FileTreeString returns a string representation of FileTree
+// FileTreeString returns a string representation of a tree of files following a directory structure
 func FileTreeString(file string, depth int) string {
 	out := ""
 	fi, err := os.Stat(file)
 	util.CheckError(err)
-	switch mode := fi.Mode(); {
-	case mode.IsDir():
+	if fi.IsDir() {
 		files, err := ioutil.ReadDir(file)
-		if err != nil {
-			log.Fatal(err)
-		}
+		util.CheckError(err)
 
+		out += strings.Repeat("&nbsp;", depth) + fi.Name() + "</br>"
 		for _, f := range files {
 			fileName := f.Name()
 			if fileName[0] == '.' || fileName[0] == '#' || fileName[0] == '~' || fileName[len(fileName)-1] == '~' {
 				continue
 			}
-			out += strings.Repeat("&nbsp;", depth) + file + "/" + f.Name() + "</br>"
-			out += FileTreeString(file+"/"+f.Name(), depth+1)
+			filePath := file + "/" + fileName
+			log.Printf("filePath: %s", filePath)
+			out += FileTreeString(filePath, depth+1)
 		}
-	case mode.IsRegular():
+	} else {
+		log.Printf("reg filename: %s", file)
 		out += strings.Repeat("&nbsp;", depth) +
 			"<a href=\"/file/?f=" + file + "\">" + file + "</a></br>"
 	}
