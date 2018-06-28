@@ -124,6 +124,7 @@ func IndexTree(tree *object.Tree, repoPath string, indexFile string) {
 		}
 		if info != nil && info.Mode()&os.ModeType == 0 {
 			ix.AddFile(file)
+			//go ix.AddFile(file)
 		}
 		return nil
 	})
